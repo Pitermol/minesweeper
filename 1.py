@@ -1,11 +1,59 @@
 import random
-
+import os
 import pygame
+import sys
 
 pygame.init()
 size = 320, 470
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
+
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    try:
+        image = pygame.image.load(fullname)
+    except pygame.error as message:
+        print('Cannot load image:', name)
+        raise SystemExit(message)
+
+    image = image.convert_alpha()
+    if colorkey is not None:
+        if colorkey is -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    return image
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def end_screen():
+    intro_text = ["GAME OVER",
+                  "PLEASE PUSH SPACE TO QUIT"]
+
+    fon = pygame.transform.scale(load_image('game_over.jpg'), (320, 470))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(10)
 
 
 class Board:
@@ -63,11 +111,19 @@ class Minesweeper(Board):
                 self.board[y][x] = 10
                 i += 1
 
+
+
+
+
+
+
     def open_cell(self, cell):
         x, y = cell
 
         # проверяем на бомбу
         if self.board[y][x] == 10:
+            print('bombaaa')
+            self.board[y][x] = 15
             return
 
         s = 0
@@ -77,12 +133,18 @@ class Minesweeper(Board):
                     continue
                 if self.board[y + dy][x + dx] == 10:
                     s += 1
-        self.board[y][x] = s
+        if self.board[y][x] != 15:
+            self.board[y][x] = s
+        if self.board[y][x] == 10:
+            self.board[y][x] = 15
+        print(self.board)
 
     def on_click(self, cell):
         self.open_cell(cell)
 
     def render(self):
+        self.game_over = False
+        all_sprites = pygame.sprite.Group()
         for y in range(self.height):
             for x in range(self.width):
 
@@ -92,10 +154,15 @@ class Minesweeper(Board):
 #                                     (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
 #                                      self.cell_size))
 
-                if self.board[y][x] >= 0 and self.board[y][x] != 10:
+                if self.board[y][x] >= 0 and self.board[y][x] != 10 and self.board[y][x] != 15:
                     font = pygame.font.Font(None, self.cell_size - 6)
                     text = font.render(str(self.board[y][x]), 1, (100, 255, 100))
                     screen.blit(text, (x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3))
+                elif self.board[y][x] == 15:
+                    image = load_image("buum.jpg")
+                    image = pygame.transform.scale(image, (30, 30))
+                    screen.blit(image, (x * self.cell_size + self.left, y * self.cell_size + self.top))
+                    self.game_over = True
 
                 pygame.draw.rect(screen, pygame.Color(255, 255, 255),
                                  (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
@@ -104,7 +171,7 @@ class Minesweeper(Board):
 
 board = Minesweeper(10, 15, 10)
 board.set_view(10, 10, 30)
-
+end_screen()
 # Включено ли обновление поля
 time_on = False
 ticks = 0
