@@ -61,7 +61,9 @@ class Board:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.board = [[0] * width for _ in range(height)]
+        self.board = [([0] * width, [0] * width) for _ in range(height)]
+        self.flags = [([0] * width, [0] * width) for _ in range(height)]
+        print(self.board)
         # значения по умолчанию
         self.left = 10
         self.top = 10
@@ -81,7 +83,7 @@ class Board:
         self.cell_size = cell_size
 
     # cell - кортеж (x, y)
-    def on_click(self, cell):
+    def on_click(self, cell, right):
         # заглушка для реальных игровых полей
         pass
 
@@ -92,10 +94,10 @@ class Board:
             return None
         return cell_x, cell_y
 
-    def get_click(self, mouse_pos):
+    def get_click(self, mouse_pos, right):
         cell = self.get_cell(mouse_pos)
         if cell:
-            self.on_click(cell)
+            self.on_click(cell, right)
 
 
 class Minesweeper(Board):
@@ -111,61 +113,56 @@ class Minesweeper(Board):
                 self.board[y][x] = 10
                 i += 1
 
-
-
-
-
-
-
-    def open_cell(self, cell):
+    def open_cell(self, cell, right):
         x, y = cell
+        if right == False:
+            # проверяем на бомбу
+            if self.board[y][0][x] == 10:
+                print('bombaaa')
+                self.board[y][0][x] = 15
+                end_screen()
+                return
 
-        # проверяем на бомбу
-        if self.board[y][x] == 10:
-            print('bombaaa')
-            self.board[y][x] = 15
-            end_screen()
-            return
+            s = 0
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if x + dx < 0 or x + dx >= self.width or y + dy < 0 or y + dy >= self.height:
+                        continue
+                    if self.board[y + dy][0][x + dx] == 10:
+                        s += 1
+            if self.board[y][0][x] != 15:
+                self.board[y][0][x] = s
+            if self.board[y][0][x] == 10:
+                self.board[y][0][x] = 15
+        elif right == True:
+            x, y = cell
+            print(111)
+            if self.board[x][1][y] == 20:
+                self.board[x][1][y] = 0
+            else:
+                self.board[x][1][y] = 20
 
-        s = 0
-        for dy in range(-1, 2):
-            for dx in range(-1, 2):
-                if x + dx < 0 or x + dx >= self.width or y + dy < 0 or y + dy >= self.height:
-                    continue
-                if self.board[y + dy][x + dx] == 10:
-                    s += 1
-        if self.board[y][x] != 15:
-            self.board[y][x] = s
-        if self.board[y][x] == 10:
-            self.board[y][x] = 15
-        print(self.board)
-
-    def on_click(self, cell):
-        self.open_cell(cell)
+    def on_click(self, cell, right):
+        self.open_cell(cell, right)
 
     def render(self):
         self.game_over = False
         all_sprites = pygame.sprite.Group()
         for y in range(self.height):
             for x in range(self.width):
-
-                # мина - красный квадрат
-#                if self.board[y][x] == 10:
-#                    pygame.draw.rect(screen, pygame.Color("red"),
-#                                     (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
-#                                      self.cell_size))
-
-                if self.board[y][x] >= 0 and self.board[y][x] != 10 and self.board[y][x] != 15:
+                if self.board[x][1][y] == 20:
+                    pygame.draw.rect(screen, pygame.Color('red'), (x, y, self.cell_size - 3, self.cell_size - 3))
+                elif self.board[y][0][x] >= 0 and self.board[y][0][x] != 10 and self.board[y][0][x] != 15:
                     font = pygame.font.Font(None, self.cell_size - 6)
-                    text = font.render(str(self.board[y][x]), 1, (100, 255, 100))
+                    text = font.render(str(self.board[y][0][x]), 1, (100, 255, 100))
                     screen.blit(text, (x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3))
-                elif self.board[y][x] == 15:
+                elif self.board[y][0][x] == 15:
                     image = load_image("buum.jpg")
                     image = pygame.transform.scale(image, (30, 30))
                     screen.blit(image, (x * self.cell_size + self.left, y * self.cell_size + self.top))
                     self.game_over = True
 
-                pygame.draw.rect(screen, pygame.Color(255, 255, 255),
+                pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                                   self.cell_size), 1)
 
@@ -183,10 +180,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            board.get_click(event.pos)
+            board.get_click(event.pos, right)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE or event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             right = not right
-            board.get_click(event.pos)
+            board.get_click(event.pos, right)
+        right = False
     screen.fill((0, 0, 0))
     board.render()
     pygame.display.flip()
