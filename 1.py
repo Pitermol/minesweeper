@@ -111,12 +111,6 @@ class Minesweeper(Board):
                 self.board[y][x] = 10
                 i += 1
 
-
-
-
-
-
-
     def open_cell(self, cell):
         x, y = cell
 
@@ -138,7 +132,6 @@ class Minesweeper(Board):
             self.board[y][x] = s
         if self.board[y][x] == 10:
             self.board[y][x] = 15
-        print(self.board)
 
     def on_click(self, cell):
         self.open_cell(cell)
