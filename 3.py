@@ -3,10 +3,13 @@ import os
 import pygame
 import sys
 
+
+
 pygame.init()
-size = 320, 470
+size = 304, 304
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
+
 
 
 def load_image(name, colorkey=None):
@@ -29,17 +32,16 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-
 def end_screen():
-    intro_text = ["GAME OVER",
+    intro_text = ["YOU'VE WON!!!!!",
                   "PLEASE PUSH SPACE TO QUIT"]
 
-    fon = pygame.transform.scale(load_image('game_over.jpg'), (320, 470))
+    fon = pygame.transform.scale(load_image('win.jpg'), (320, 470))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('red'))
+        string_rendered = font.render(line, 1, pygame.Color('white'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -54,7 +56,6 @@ def end_screen():
                 terminate()
         pygame.display.flip()
         clock.tick(10)
-
 
 class Board:
     # создание поля
@@ -126,7 +127,7 @@ class Minesweeper(Board):
         for y in range(self.height):
             for x in range(self.width):
 
-                # мина - синий квадрат
+                # мина - красный
                 if self.board[y][x] == 10:
                     pygame.draw.rect(screen, pygame.Color("blue"),
                                      (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
@@ -137,9 +138,10 @@ class Minesweeper(Board):
                     text = font.render(str(self.board[y][x]), 1, (100, 255, 100))
                     screen.blit(text, (x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3))
 
-                pygame.draw.rect(screen, pygame.Color(255, 255, 255),
+                pygame.draw.rect(screen, pygame.Color(0, 0, 255),
                                  (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                                   self.cell_size), 1)
+
         board.render()
         pygame.display.flip()
 
@@ -148,6 +150,13 @@ class Minesweeper(Board):
         print(self.board[y][x])
         self.board[y][x] *= right
         print(self.board[y][x])
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.board[y][x] == -12 or self.board[y][x] == -10:
+                    self.ind = 1
+                    break
+        if self.ind == 0:
+            end_screen()
 
     def open_cell(self, cell):
         x, y = cell
@@ -157,7 +166,6 @@ class Minesweeper(Board):
                 for c in range(len(self.board[z])):
                     if abs(self.board[c][z]) == 10:
                         self.board[c][z] = -15
-            print(self.board)
             self.ind = 1
             return
         s = 0
@@ -168,6 +176,15 @@ class Minesweeper(Board):
                 if abs(self.board[y + dy][x + dx]) == 10:
                     s += 1
         self.board[y][x] = s
+        print(self.board)
+        self.ind = 0
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.board[y][x] == -12 or self.board[y][x] == -10:
+                    self.ind = 1
+                    break
+        if self.ind == 0:
+            end_screen()
         print(self.board)
 
     def on_click(self, cell):
@@ -181,22 +198,23 @@ class Minesweeper(Board):
                 if self.board[y][x] == 10 or self.board[y][x] == 12:
                     pygame.draw.rect(screen, pygame.Color('red'), (x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3, self.cell_size - 3, self.cell_size - 3))
                 elif self.board[y][x] >= 0 and self.board[y][x] != 10 and self.board[y][x] != -10:
-                    font = pygame.font.Font(None, self.cell_size - 6)
-                    text = font.render(str(self.board[y][x]), 1, (100, 255, 100))
-                    screen.blit(text, (x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3))
+                    font = pygame.font.Font(None, self.cell_size - 0)
+                    text = font.render(str(self.board[y][x]), 1, (255, 255, 255))
+                    screen.blit(text, (x * self.cell_size + self.left + 9, y * self.cell_size + self.top + 5))
                 elif self.board[y][x] == -15:
                     pygame.draw.rect(screen, pygame.Color('green'), (
                     x * self.cell_size + self.left + 3, y * self.cell_size + self.top + 3, self.cell_size - 3,
                     self.cell_size - 3))
-
                 pygame.draw.rect(screen, pygame.Color('white'),
                                  (x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                                   self.cell_size), 1)
 
 
+
+
 right = 1
-board = Minesweeper(5, 5, 2)
-board.set_view(10, 10, 30)
+board = Minesweeper(10, 10, 20)
+board.set_view(2, 2, 30)
 # Включено ли обновление поля
 time_on = False
 ticks = 0
@@ -208,11 +226,16 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             board.get_click(event.pos)
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE or event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            exit(0)
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             right *= -1
             print(right, 1212)
             board.get_click_right(event.pos, right)
             right *= -1
+
+
     screen.fill((0, 0, 0))
     board.render()
     pygame.display.flip()
