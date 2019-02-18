@@ -12,12 +12,12 @@ clock = pygame.time.Clock()
 
 
 
-def load_image(name, colorkey=None):
+def load_image(name, colorkey=None): # Функция для загрузки изображения
     fullname = os.path.join('data', name)
     try:
         image = pygame.image.load(fullname)
     except pygame.error as message:
-        print('Cannot load image:', name)
+        print('Cannot load img:', name)
         raise SystemExit(message)
 
     image = image.convert_alpha()
@@ -32,9 +32,9 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-def end_screen():
+def end_screen():  # функция, вызывающая экран, который появляется когда пользователь выигрывает.
     intro_text = ["YOU'VE WON!!!!!",
-                  "PLEASE PUSH SPACE TO QUIT"]
+                  "PLEASE PUSH SPACE TO QUIT"]  # Текст, который появляется при этом
 
     fon = pygame.transform.scale(load_image('win.jpg'), (320, 470))
     screen.blit(fon, (0, 0))
@@ -53,13 +53,13 @@ def end_screen():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                terminate()
+                terminate()  # если пользователь нижимает любую клавишу, окно закрывается
         pygame.display.flip()
         clock.tick(10)
 
 class Board:
     # создание поля
-    def __init__(self, width, height):
+    def __init__(self, width, height):  # инициализация окна и задавание нужных переменных
         self.width = width
         self.height = height
         self.board = [[0] * width for _ in range(height)]
@@ -94,7 +94,7 @@ class Board:
         cell_y = (mouse_pos[1] - self.top) // self.cell_size
         if cell_x < 0 or cell_x >= self.width or cell_y < 0 or cell_y >= self.height:
             return None
-        return cell_x, cell_y
+        return cell_x, cell_y  # возвращает координаты клетки
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
@@ -108,7 +108,7 @@ class Board:
 
 
 class Minesweeper(Board):
-    def __init__(self, width, height, n):
+    def __init__(self, width, height, n):  # инициализация клеток и заполнение рандомных клеток минами
         super().__init__(width, height)
         print(1)
         # вначале все клетки закрыты
@@ -143,9 +143,9 @@ class Minesweeper(Board):
                                   self.cell_size), 1)
 
         board.render()
-        pygame.display.flip()
+        pygame.display.flip()  # здесь пишется количество мин, находящихся рядом с клеткой, которую пользователь открывает, также идет обновление поля через рендер
 
-    def on_click_right(self, cell, right):
+    def on_click_right(self, cell, right):  # функция вызывается после нажатия пользователем ПКМ. Если это происходит, то в клетку ставится флажок, который обозначен красным квадратом
         x, y = cell
         print(self.board[y][x])
         self.board[y][x] *= right
@@ -156,7 +156,8 @@ class Minesweeper(Board):
                     self.ind = 1
                     break
         if self.ind == 0:
-            end_screen()
+            end_screen()  # последние семь строчек этой фунции- это прохождение по всем клеточкам.
+                         # Если все пустые- открыты, а все с бомбой- помечены флажком, то пользователь выигрывает и ему высвечивается окно из функции end_screen
 
     def open_cell(self, cell):
         x, y = cell
@@ -169,7 +170,7 @@ class Minesweeper(Board):
             self.ind = 1
             return
         s = 0
-        for dy in range(-1, 2):
+        for dy in range(-1, 2):  # Этот цикл считает то самое число мин, находящиеся рядом с клеткой, которую мы открываем
             for dx in range(-1, 2):
                 if x + dx < 0 or x + dx >= self.width or y + dy < 0 or y + dy >= self.height:
                     continue
@@ -184,7 +185,7 @@ class Minesweeper(Board):
                     self.ind = 1
                     break
         if self.ind == 0:
-            end_screen()
+            end_screen()  # Тот же самый цикл, определяющий, если пользователь выигрывает
         print(self.board)
 
     def on_click(self, cell):
